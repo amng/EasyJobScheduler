@@ -1,5 +1,6 @@
 #include <fstream>
 #include <algorithm>
+#include <iostream>
 #include "../includes/TaskManager.hpp"
 
 std::vector<std::string> TaskManager::parseDependencies(std::string line)
@@ -16,7 +17,7 @@ std::vector<std::string> TaskManager::parseDependencies(std::string line)
         {
             res.push_back(temp);
             temp = "";
-            i++; //skip the space after the comma (Really bad :( )
+            i++; //skip the space after the comma (TODO: change this method completely)
         }
     }
     return res;
@@ -81,7 +82,11 @@ TaskManager::~TaskManager()
 
 void TaskManager::runHelper(Task * task)
 {
-
+    for (const std::string & nextTask : task->getDependencies())
+    {
+        runHelper(tasksMap[nextTask]);
+    }
+    task->executeTask();
 }
 
 void TaskManager::run()
@@ -107,7 +112,7 @@ bool TaskManager::isThereACyclicDependencyHelper(Task *task, std::vector<Task *>
     previousTasks.push_back(task);
     for (const std::string & nextTask : task->getDependencies())
     {
-        if (isThereACyclicDependencyHelper(tasksMap[nextTask], previousTasks))
+        if (tasksMap.find(mainTask) != tasksMap.end() && isThereACyclicDependencyHelper(tasksMap[nextTask], previousTasks))
             return true;
     }
     return false;
@@ -116,6 +121,8 @@ bool TaskManager::isThereACyclicDependencyHelper(Task *task, std::vector<Task *>
 bool TaskManager::isThereACyclicDependency()
 {
     std::vector<Task *> previousTasks;
+    if (tasksMap.find(mainTask) == tasksMap.end())
+        return false;
     return isThereACyclicDependencyHelper(tasksMap[mainTask], previousTasks);
 }
 
@@ -137,5 +144,7 @@ bool TaskManager::isThereAMissingDependencyHelper(Task *task)
 
 bool TaskManager::isThereAMissingDependency()
 {
+    if (tasksMap.find(mainTask) == tasksMap.end())
+        return true;
     return isThereAMissingDependencyHelper(tasksMap[mainTask]);
 }

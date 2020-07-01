@@ -2,6 +2,7 @@
 
 #include <string>
 #include <vector>
+#include <functional>
 
 class Task
 {
@@ -27,5 +28,8 @@ public:
     */
     void setDependencies(std::vector<std::string> dependencies);
 
+    /**
+     * @return all the names of the tasks that are dependencies for this task 
+     */ 
     const std::vector<std::string> & getDependencies();
 };
