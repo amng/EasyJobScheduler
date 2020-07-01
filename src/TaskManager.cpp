@@ -1,6 +1,5 @@
 #include <fstream>
 #include <algorithm>
-#include <iostream>
 #include "../includes/TaskManager.hpp"
 
 std::vector<std::string> TaskManager::parseDependencies(std::string line)
@@ -28,12 +27,17 @@ void TaskManager::addTaskFromFile(std::string filePath)
     Task *task = new Task();
     //no need to close since ifstream uses RAII
     std::ifstream infile(filePath);
+    if (infile.fail())
+    {
+        errorState = true;
+        missingFiles.push_back(filePath);
+        return;
+    }
+    
     int i = 0;
     std::string taskName;
-    std::cout << "=========================================================>>>>>>>FILE CONTENTS" << std::endl;
     for (std::string line; std::getline( infile, line ); i++)
     {
-        std::cout << line << std::endl;
         switch (i)
         {
         case 0:
@@ -51,6 +55,11 @@ void TaskManager::addTaskFromFile(std::string filePath)
     tasksMap[taskName] = task;
 }
 
+bool TaskManager::didErrorHappen()
+{
+    return this->errorState;
+}
+
 TaskManager::TaskManager(std::string task, std::vector<std::string> fileNames) : mainTask(task)
 {
     for (std::string &taskFile : fileNames)
@@ -59,9 +68,7 @@ TaskManager::TaskManager(std::string task, std::vector<std::string> fileNames) :
     }
 }
 
-/**
- * Cleans up all the tasks that were created in the beggining
- */
+
 TaskManager::~TaskManager()
 {
     for (auto task : tasksMap)
@@ -71,11 +78,26 @@ TaskManager::~TaskManager()
     tasksMap.clear();
 }
 
-/**
- * Executes main task which will in turn run all needed dependencies
- */
+
+void TaskManager::runHelper(Task * task)
+{
+
+}
+
 void TaskManager::run()
 {
+    runHelper(tasksMap[mainTask]);
+}
+
+
+std::string TaskManager::getErrorMessage()
+{
+    std::string errorMsg = "Missing files: "; //TODO: move this text to a constant
+    for (std::string f : missingFiles)
+    {
+        errorMsg += f + ", ";
+    }
+    return errorMsg;
 }
 
 bool TaskManager::isThereACyclicDependencyHelper(Task *task, std::vector<Task *> & previousTasks)
@@ -95,4 +117,25 @@ bool TaskManager::isThereACyclicDependency()
 {
     std::vector<Task *> previousTasks;
     return isThereACyclicDependencyHelper(tasksMap[mainTask], previousTasks);
+}
+
+bool TaskManager::isThereAMissingDependencyHelper(Task *task)
+{
+    for (const std::string & nextTask : task->getDependencies())
+    {
+        if (tasksMap.find(nextTask) == tasksMap.end())
+        {
+            return true;
+        }
+        else 
+        {
+            return isThereAMissingDependencyHelper(tasksMap[nextTask]);
+        }
+    }
+    return false;
+}
+
+bool TaskManager::isThereAMissingDependency()
+{
+    return isThereAMissingDependencyHelper(tasksMap[mainTask]);
 }

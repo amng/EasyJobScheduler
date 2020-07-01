@@ -14,5 +14,19 @@ int main(int argsCount, char** argsValues) {
     }
     std::string mainTask = argsValues[0];
     TaskManager manager(mainTask, taskFiles);
+    if (manager.didErrorHappen())
+    {
+        std::cout << "Error: " << manager.getErrorMessage() << std::endl;
+        exit(-1);
+    }
+    if (manager.isThereACyclicDependency()){
+        std::cout << "Error: There's a cyclic dependency in your tasks!";
+        exit(-1);
+    }
+    if (manager.isThereAMissingDependency())
+    {
+        std::cout << "Error: There's at least one missing dependency!";
+        exit(-1);
+    }
     manager.run();    
 }
