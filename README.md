@@ -1,1 +1,4 @@
 # EasyJobScheduler
+
+## Project dependencies
+- GTest
