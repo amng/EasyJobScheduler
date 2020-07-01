@@ -3,7 +3,9 @@ project(EasyJobScheduler VERSION 0.1.0)
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_FLAGS "-Wno-deprecated-declarations")
 
-add_executable(EasyJobScheduler src/main.cpp)
+
+file(GLOB EasyJobScheduler_SRC "src/*.cpp")
+add_executable(EasyJobScheduler ${EasyJobScheduler_SRC})
 
 set(CPACK_PROJECT_NAME ${PROJECT_NAME})
 set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})
@@ -27,7 +29,11 @@ ExternalProject_Get_Property(gtest source_dir binary_dir)
 
 
 # Define a test
-add_executable(EasyJobScheduler_tests tests/unit_tests.cpp)
+file(GLOB EasyJobScheduler_TEST_SRC "src/*.cpp")
+list(REMOVE_ITEM EasyJobScheduler_TEST_SRC ${CMAKE_CURRENT_SOURCE_DIR}/src/main.cpp)
+list(APPEND EasyJobScheduler_TEST_SRC ${CMAKE_CURRENT_SOURCE_DIR}/tests/unit_tests.cpp)
+
+add_executable(EasyJobScheduler_tests ${EasyJobScheduler_TEST_SRC})
 
 add_dependencies(EasyJobScheduler_tests gtest)
 include_directories(${source_dir}/include)
@@ -38,5 +44,5 @@ target_link_libraries(EasyJobScheduler_tests ${binary_dir}/libgtest.a ${binary_d
 #   $ make test
 
 enable_testing()
-add_test(NAME    EasyJobScheduler_tests 
-         COMMAND EasyJobScheduler_tests)
+include(GoogleTest)
+gtest_discover_tests(EasyJobScheduler_tests)
